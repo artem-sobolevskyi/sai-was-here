@@ -1,0 +1,72 @@
+name: Build and release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Restore packages
+        run: nuget restore SAI_WAS_HERE.sln -PackagesDirectory packages -NonInteractive
+
+      - name: Build Release
+        run: >
+          msbuild SAI_WAS_HERE\SAI_WAS_HERE.csproj
+          /t:Rebuild
+          /p:Configuration=Release
+          /p:Platform=AnyCPU
+          /v:minimal
+
+      - name: Stage EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path publish | Out-Null
+          Copy-Item "SAI_WAS_HERE\bin\Release\SAI_WAS_HERE.exe" "publish\SAI_WAS_HERE.exe"
+          Get-Item "publish\SAI_WAS_HERE.exe" | Format-List Name, Length, FullName
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAI_WAS_HERE
+          path: publish/SAI_WAS_HERE.exe
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v1.6.8.1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create release on sai-was-here
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${{ steps.ver.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" publish/SAI_WAS_HERE.exe --clobber
+          else
+            gh release create "$TAG" publish/SAI_WAS_HERE.exe \
+              --title "SAI_WAS_HERE $TAG" \
+              --notes "Windows Release build of SAI_WAS_HERE.exe"
+          fi
+          echo "EXE: https://github.com/${{ github.repository }}/releases/download/${TAG}/SAI_WAS_HERE.exe"
