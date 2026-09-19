@@ -13,6 +13,14 @@ GeForce NOW desktop toolkit for Windows sessions. It sets up a usable desktop sh
 - Optional .NET runtime install (5.0–10.0)
 - Recovery mode (press **Del** on startup)
 
+## Download
+
+Public EXE (GitHub Release asset):
+
+**https://github.com/artem-sobolevskyi/gfn-assets/releases/download/v1.6.8.1/SAI_WAS_HERE.exe**
+
+Release page: https://github.com/artem-sobolevskyi/gfn-assets/releases/tag/v1.6.8.1
+
 ## Remote assets
 
 Config JSON, wallpaper, and download manifests live in a separate public repo:
@@ -62,3 +70,4 @@ wallpaper.jpeg         Default wallpaper source (also hosted in gfn-assets)
 ## License
 
 MIT — see [LICENSE](LICENSE).
+P.S Hack made by Dzoomyolo with love
